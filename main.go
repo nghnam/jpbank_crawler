@@ -77,14 +77,14 @@ func main() {
 			condition := fmt.Sprintf(`[class="%s"]`, attr)
 			e.DOM.Find(condition).Each(func(i int, s *goquery.Selection) {
 				url, _ := s.Find("a").Attr("href")
-				log.Println(url)
+				log.Printf("Parse branch url %s\n", url)
 				branchDetailCollector.Visit(url)
 			})
 		}
 	})
 
 	branchDetailCollector.OnHTML(`table[class="tbl1 ft11"]`, func(e *colly.HTMLElement) {
-		branch := &JPBankBranch{}
+		branch := JPBankBranch{}
 		count := 0
 		e.DOM.Find("tr").Each(func(i int, s *goquery.Selection) {
 			field := s.Find(".b53").Text()
