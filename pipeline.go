@@ -2,17 +2,53 @@ package main
 
 import (
 	"database/sql"
+	"log"
+
 	"github.com/jmoiron/sqlx"
 )
 
 // JPBankPipeline ...
 type JPBankPipeline struct {
-	db *sqlx.DB
+	db     *sqlx.DB
+	itemCh <-chan interface{}
 }
 
 // NewJPBankPipeline ...
-func NewJPBankPipeline(db *sqlx.DB) *JPBankPipeline {
-	return &JPBankPipeline{db: db}
+func NewJPBankPipeline(db *sqlx.DB, itemCh chan interface{}) *JPBankPipeline {
+	return &JPBankPipeline{db: db, itemCh: itemCh}
+}
+
+func (p *JPBankPipeline) Run() {
+	for {
+		select {
+		case item := <-p.itemCh:
+			bank, isBank := item.(JPBank)
+			if isBank {
+				existed, err := p.IsBankExisted(bank.BankCode)
+				if err != nil {
+					log.Println(err)
+				}
+				if !existed {
+					if err := p.CreateBank(bank.KanjiName, bank.BankCode); err != nil {
+						log.Println(err)
+					}
+				}
+			}
+
+			branch, isBranch := item.(JPBankBranch)
+			if isBranch {
+				existed, err := p.IsBranchExisted(branch.BankCode, branch.BranchCode)
+				if err != nil {
+					log.Println(err)
+				}
+				if !existed {
+					if err := p.CreateBranch(&branch); err != nil {
+						log.Println(err)
+					}
+				}
+			}
+		}
+	}
 }
 
 func (p *JPBankPipeline) CreateBank(kanjiName, bankCode string) error {

@@ -40,7 +40,10 @@ func main() {
 	db.Exec(bankSchema)
 	db.Exec(branchSchema)
 
-	jpBankPipeline := NewJPBankPipeline(db)
+	itemCh := make(chan interface{})
+	jpBankPipeline := NewJPBankPipeline(db, itemCh)
+
+	go jpBankPipeline.Run()
 
 	baseURL := "https://bkichiran.hikak.com/"
 	c := colly.NewCollector()
@@ -57,17 +60,12 @@ func main() {
 				bankCode := strings.TrimSuffix(url, "/")
 				url = baseURL + url
 				kanjiName := s.Text()
+				bank := JPBank{
+					KanjiName: kanjiName,
+					BankCode:  bankCode,
+				}
 
-				existed, err := jpBankPipeline.IsBankExisted(bankCode)
-				if err != nil {
-					log.Println(err)
-				}
-				if !existed {
-					if err := jpBankPipeline.CreateBank(kanjiName, bankCode); err != nil {
-						fmt.Println("here")
-						log.Println(err)
-					}
-				}
+				itemCh <- bank
 				branchListCollector.Visit(url)
 			})
 		}
@@ -122,15 +120,7 @@ func main() {
 			}
 		})
 
-		existed, err := jpBankPipeline.IsBranchExisted(branch.BankCode, branch.BranchCode)
-		if err != nil {
-			log.Println(err)
-		}
-		if !existed {
-			if err := jpBankPipeline.CreateBranch(branch); err != nil {
-				log.Println(err)
-			}
-		}
+		itemCh <- branch
 	})
 
 	c.Visit(baseURL)
