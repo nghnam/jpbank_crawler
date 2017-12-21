@@ -11,17 +11,18 @@ import (
 type JPBankPipeline struct {
 	db     *sqlx.DB
 	itemCh <-chan interface{}
+	doneCh chan struct{}
 }
 
 // NewJPBankPipeline ...
-func NewJPBankPipeline(db *sqlx.DB, itemCh chan interface{}) *JPBankPipeline {
-	return &JPBankPipeline{db: db, itemCh: itemCh}
+func NewJPBankPipeline(db *sqlx.DB, itemCh chan interface{}, doneCh chan struct{}) *JPBankPipeline {
+	return &JPBankPipeline{db: db, itemCh: itemCh, doneCh: doneCh}
 }
 
 func (p *JPBankPipeline) Run() {
 	for {
-		select {
-		case item := <-p.itemCh:
+		item, more := <-p.itemCh
+		if more {
 			bank, isBank := item.(JPBank)
 			if isBank {
 				existed, err := p.IsBankExisted(bank.BankCode)
@@ -47,6 +48,9 @@ func (p *JPBankPipeline) Run() {
 					}
 				}
 			}
+		} else {
+			var s struct{}
+			p.doneCh <- s
 		}
 	}
 }

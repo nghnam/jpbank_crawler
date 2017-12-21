@@ -41,7 +41,8 @@ func main() {
 	db.Exec(branchSchema)
 
 	itemCh := make(chan interface{})
-	jpBankPipeline := NewJPBankPipeline(db, itemCh)
+	doneCh := make(chan struct{})
+	jpBankPipeline := NewJPBankPipeline(db, itemCh, doneCh)
 
 	go jpBankPipeline.Run()
 
@@ -57,8 +58,8 @@ func main() {
 			condition := fmt.Sprintf(`[class="%s"]`, attr)
 			e.DOM.Find(condition).Each(func(i int, s *goquery.Selection) {
 				url, _ := s.Find("a").Attr("href")
-				bankCode := strings.TrimSuffix(url, "/")
 				url = baseURL + url
+				bankCode := strings.TrimSuffix(url, "/")
 				kanjiName := s.Text()
 				bank := JPBank{
 					KanjiName: kanjiName,
@@ -124,6 +125,6 @@ func main() {
 	})
 
 	c.Visit(baseURL)
-
-	c.Wait()
+	close(itemCh)
+	<-doneCh
 }
