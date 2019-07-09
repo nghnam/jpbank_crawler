@@ -49,8 +49,7 @@ func (p *JPBankPipeline) Run() {
 				}
 			}
 		} else {
-			var s struct{}
-			p.doneCh <- s
+			p.doneCh <- struct{}{}
 		}
 	}
 }
