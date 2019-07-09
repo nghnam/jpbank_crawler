@@ -62,7 +62,7 @@ func (p *JPBankPipeline) CreateBank(kanjiName, bankCode string) error {
 
 func (p *JPBankPipeline) IsBankExisted(bankCode string) (bool, error) {
 	bank := JPBank{}
-	err := p.db.Get(&bank, "SELECT * FROM jp_bank WHERE bank_code=$1", bankCode)
+	err := p.db.Get(&bank, "SELECT bank_code FROM jp_bank WHERE bank_code=$1", bankCode)
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
 	}
@@ -83,7 +83,7 @@ func (p *JPBankPipeline) CreateBranch(branch *JPBankBranch) error {
 
 func (p *JPBankPipeline) IsBranchExisted(bankCode, branchCode string) (bool, error) {
 	branch := JPBankBranch{}
-	err := p.db.Get(&branch, "SELECT * FROM jp_bank_branch WHERE bank_code=$1 and branch_code=$2", bankCode, branchCode)
+	err := p.db.Get(&branch, "SELECT bank_code, branch_code FROM jp_bank_branch WHERE bank_code=$1 and branch_code=$2", bankCode, branchCode)
 	if err != nil && err != sql.ErrNoRows {
 		return false, err
 	}
