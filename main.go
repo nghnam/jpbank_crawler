@@ -91,29 +91,26 @@ func main() {
 			field := s.Find(".b53").Text()
 			value := s.Find(".b54").Text()
 
-			if field == "支店名" {
+			switch field {
+			case "支店名":
 				branch.KanjiName = value
-			}
-			if field == "フリガナ" && count == 0 {
-				count++ // Kata Bank Name
-			}
-			if field == "フリガナ" && count == 1 {
-				branch.KataName = value
-			}
-			if field == "金融機関コード" {
+			case "フリガナ":
+				if count == 0 {
+					count++
+				} else {
+					branch.KataName = value
+				}
+			case "金融機関コード":
 				branch.BankCode = value
-			}
-			if field == "支店コード" {
+			case "支店コード":
 				branch.BranchCode = value
-			}
-			if field == "住所" {
+			case "住所":
 				address := strings.Split(value, " ")[0]
 				branch.Address = sql.NullString{
 					String: address,
 					Valid:  true,
 				}
-			}
-			if field == "電話番号" {
+			case "電話番号":
 				branch.Phone = sql.NullString{
 					String: value,
 					Valid:  true,
