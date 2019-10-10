@@ -1,7 +1,6 @@
 package main
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"strings"
@@ -86,36 +85,12 @@ func main() {
 
 	branchDetailCollector.OnHTML(`table[class="tbl1 ft11"]`, func(e *colly.HTMLElement) {
 		branch := JPBankBranch{}
-		count := 0
+
 		e.DOM.Find("tr").Each(func(i int, s *goquery.Selection) {
 			field := s.Find(".b53").Text()
 			value := s.Find(".b54").Text()
 
-			switch field {
-			case "支店名":
-				branch.KanjiName = value
-			case "フリガナ":
-				if count == 0 {
-					count++
-				} else {
-					branch.KataName = value
-				}
-			case "金融機関コード":
-				branch.BankCode = value
-			case "支店コード":
-				branch.BranchCode = value
-			case "住所":
-				address := strings.Split(value, " ")[0]
-				branch.Address = sql.NullString{
-					String: address,
-					Valid:  true,
-				}
-			case "電話番号":
-				branch.Phone = sql.NullString{
-					String: value,
-					Valid:  true,
-				}
-			}
+			setBranchAttribute(field, value, &branch)
 		})
 
 		itemCh <- branch
